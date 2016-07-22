@@ -100,6 +100,8 @@ Stroxy only works on certain methods and method signatures. Currently the follow
 
 * `addEventListener` (and `add` alias)
 * `removeEventListener` (and `remove` alias)
+* `setTimeout`
+* `clearTimeout`
 * `setInterval`
 * `clearInterval`
 * `on` (jQuery, EventEmitter)
