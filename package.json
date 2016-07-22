@@ -19,5 +19,12 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^2.5.3"
+  },
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "dependencies": {
+    "chai": "^3.5.0"
   }
 }

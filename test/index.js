@@ -126,4 +126,25 @@ describe('stroxy', () => {
         done();
       });
   });
+
+  it('should allow removing value listeners', (done) => {
+	const stream = myGlobal.setInterval(intervalDuration);
+
+    let counterPlus = 0;
+    const pipePlus = stream
+      .pipe(_ => ++counterPlus);
+
+    const listener = value => {
+	  expect(value).to.be.equal(1);
+	  expect(value).to.be.equal(counterPlus);
+
+	  stream.offValue(listener);
+
+	  myGlobal
+	  	.setTimeout(intervalDuration * 2)
+	  	.pipe(_ => done());
+	};
+
+	pipePlus.onValue(listener);
+  });
 });

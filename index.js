@@ -4,6 +4,8 @@ var stroxy = (function () {
   const ADD = 1;
   const REMOVE = -1;
 
+  const $$stream = Symbol('stream');
+
   const createEmpty = obj => Object.assign(Object.create(null), obj);
 
   /**
@@ -64,8 +66,16 @@ var stroxy = (function () {
 
   const objectRegex = /^\[object/;
   const isObject = obj => objectRegex.test(Object.prototype.toString.call(obj));
+  const isFunction = fn => typeof fn === 'function';
   const isNumber = number => number === Number(number);
   const isNodeList = obj => typeof NodeList !== 'undefined' ? NodeList.prototype.isPrototypeOf(obj) : false;
+
+  function removeEntry(entry, array) {
+    array = array.slice();
+    const index = array.indexOf(entry);
+    array.splice(index, 1);
+    return array;
+  }
 
   /**
    * Run an array of stream instances
@@ -95,6 +105,7 @@ var stroxy = (function () {
    * The prototypal object for both parent and child streams
    */
   const streamProto = {
+    [$$stream]: true,
     instances: [],
     valueListeners: [],
     /**
@@ -129,13 +140,25 @@ var stroxy = (function () {
         instance: this,
       });
     },
-    removeChild(instance) {
-      const index = this.instances.indexOf(instance);
-      this.instances.splice(index, 1);
+    /**
+     * Remove a valuelistener
+     * @param {Function} listener - The listener function
+     */
+    offValue(listener) {
+      const {valueListeners} = this.parent ? this.parent : this;
 
-      this.valueListeners = this.valueListeners.filter(({ instance: listenerInstance }) => {
-        return listenerInstance !== instance;
-      });
+      this.valueListeners = removeEntry(listener, this.valueListeners);
+    },
+    /**
+     * Remove a child stream from the loop
+     * @param {Object} object - The listener function
+     */
+    remove(instance) {
+        this.instances = removeEntry(instance, this.instances);
+
+        this.valueListeners = this.valueListeners.filter(({ instance: listenerInstance }) => {
+          return listenerInstance !== instance;
+        });
     },
     /**
      * Returns a function which is triggered by the JS event loop, whenever an event occurs
@@ -192,7 +215,7 @@ var stroxy = (function () {
           [stream] = args.splice(callbackIndex, 1);
 
           if (stream.parent) {
-            stream.parent.removeChild(stream);
+            stream.parent.remove(stream);
             return;
           }
         }
@@ -233,7 +256,7 @@ var stroxy = (function () {
 
         const name = getAlias(property);
 
-        if (isStreamable(name)) {
+        if (isStreamable(name) && isFunction(result)) {
           return applyListener(target, name);
         }
 
@@ -255,12 +278,15 @@ var stroxy = (function () {
     });
   }
 
-  if (typeof module === 'object') {
+  stroxy = Object.assign(stroxy, {
+    addStreamable,
+    addAlias,
+    ADD,
+    REMOVE,
+  });
+
+  if (isObject(module)) {
     module.exports = exports.default = stroxy;
-    exports.addStreamable = addStreamable;
-    exports.addAlias = addAlias;
-    exports.ADD = ADD;
-    exports.REMOVE = REMOVE;
   } else {
     return stroxy;
   }

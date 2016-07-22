@@ -9,7 +9,7 @@ A simple streaming wrapper for native event functions using ES2015 proxies.
     const doc = stroxy(document);
     const linkStream = doc.documentElement.addEventListener('click'); // or use .add('click'); shorthand
     
-    linkStream.onValue(value => console.log('clicked in document'));
+    linkStream.onValue(value => console.log('clicked in document'));x
 
 
 ### Click handler to get classnames
@@ -34,7 +34,7 @@ A simple streaming wrapper for native event functions using ES2015 proxies.
       .querySelectorAll('.link')
       .removeEventListener('click', linkStream); // or use .remove('click', isPrimary);
     // or explicitly
-    linkStream.removeChild(isPrimary);
+    linkStream.remove(isPrimary);
 
 ### Remove handler
 
@@ -68,7 +68,7 @@ Add an Alias for a method signature. E.g. `add` is an alias for `addEventListene
 ### Stream
 
 Streams are created when invoking a Streamable Method.
-E.g. `const intervalStream = stroxy(window).setInterval(400);`;
+E.g. `const intervalStream = stroxy(window).setInterval(400);`
 
 #### stream.pipe(fn);
 
@@ -79,7 +79,11 @@ The `fn` arguments will be what either the streamable function passes into the c
 
 Adds a listener function to the current stream or child stream to listen for changes.
 
-#### stream.removeChild(childStream);
+#### stream.offValue(fn);
+
+Remove a listener function from the current stream/child stream.
+
+#### stream.remove(childStream);
 
 Remove a child stream from the parent: Pipes and value listeners of the child stream will be unregistered.
 
@@ -112,6 +116,8 @@ Doing so will result in strange behavior:
     // Don't do this!
     childStream
       .pipe(x => x);
+
+Ideas to resolve to this issue are always appreciated :)
 
 ## Source of Inspiration
 
