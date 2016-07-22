@@ -23,8 +23,15 @@ A simple streaming wrapper for native event functions using ES2015 proxies.
     const isPrimary = linkStream
       .pipe(e => (e.preventDefault(), e.target.className));
 
+    const listener = value => console.log('Classnames of clicked link:', value);
+
     isPrimary
-      .onValue(value => console.log('Classnames of clicked link:', value));
+      .onValue(listener);
+
+### Remove value listener
+
+    isPrimary
+      .offValue(listener);
 
 ### Remove child stream
 

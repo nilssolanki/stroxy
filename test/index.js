@@ -142,7 +142,10 @@ describe('stroxy', () => {
 
 	  myGlobal
 	  	.setTimeout(intervalDuration * 2)
-	  	.pipe(_ => done());
+	  	.pipe(_ => {
+	  		myGlobal.clearInterval(stream);
+	  		done();
+	  	});
 	};
 
 	pipePlus.onValue(listener);
