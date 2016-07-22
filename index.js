@@ -228,7 +228,7 @@ var stroxy = (function () {
       // Apply for all targets entries if it is a NodeList or an Array
       if (isNodeList(target) || Array.isArray(target)) {
         Array.from(target).forEach((node) => {
-          Reflect.apply(target[0][property], node, args);
+          Reflect.apply(node[property], node, args);
         });
       } else {
         value = Reflect.apply(target[property], target, args);
