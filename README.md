@@ -132,6 +132,8 @@ Ideas to resolve to this issue are always appreciated :)
 
 The whole concept is heavily inspired by [bacon.js](https://baconjs.github.io/), although stroxy is a lot less versatile.
 
+Special thanks to @gianlucaguarini for the inspiration.
+
 ## Name
 
 The name is a very bland combination of the words `stream` and `proxy`.
