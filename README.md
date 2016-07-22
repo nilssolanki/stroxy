@@ -9,7 +9,7 @@ A simple streaming wrapper for native event functions using ES2015 proxies.
     const doc = stroxy(document);
     const linkStream = doc.documentElement.addEventListener('click'); // or use .add('click'); shorthand
     
-    linkStream.onValue(value => console.log('clicked in document'));x
+    linkStream.onValue(value => console.log('clicked in document'));
 
 
 ### Click handler to get classnames
