@@ -1,0 +1,23 @@
+{
+  "name": "stroxy",
+  "version": "0.1.0",
+  "description": "A little wrapper which makes dom event listeners streamable.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nilssolanki/stroxy.git"
+  },
+  "author": "Nils Solanki",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nilssolanki/stroxy/issues"
+  },
+  "homepage": "https://github.com/nilssolanki/stroxy#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3"
+  }
+}
