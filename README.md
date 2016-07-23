@@ -4,6 +4,8 @@ A simple streaming wrapper for native event functions using ES2015 proxies.
 
 ## Installation
 
+    npm install -S stroxy
+
 ## Examples
 
 ### Simple click handler
