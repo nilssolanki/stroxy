@@ -2,56 +2,63 @@
 
 A simple streaming wrapper for native event functions using ES2015 proxies.
 
+[![NPM version][npm-version-image]][npm-url]
+[![NPM downloads][npm-downloads-image]][npm-url]
+[![MIT License][license-image]][license-url]
+
 ## Installation
 
-    npm install -S stroxy
+    npm i -S stroxy
 
 ## Examples
 
 ### Simple click handler
+```js
+const doc = stroxy(document);
+const clicks = doc.documentElement.addEventListener('click'); // or use .add('click'); shorthand
 
-    const doc = stroxy(document);
-    const linkStream = doc.documentElement.addEventListener('click'); // or use .add('click'); shorthand
-    
-    linkStream.onValue(value => console.log('clicked in document'));
+clicks.onValue(value => console.log('clicked in document'));
+```
 
 
 ### Click handler to get classnames
+```js
+const doc = stroxy(document);
+const clicks = doc
+  .querySelectorAll('.link') // works on NodeLists as well!
+  .addEventListener('click');
 
-    const doc = stroxy(document);
-    const linkStream = doc
-      .querySelectorAll('.link') // works on NodeLists as well!
-      .addEventListener('click');
-    
-    // Check if link is 'primary'
-    const isPrimary = linkStream
-      .pipe(e => (e.preventDefault(), e.target.className));
+// Check if link is 'primary'
+const isPrimary = clicks.pipe(e => (e.preventDefault(), e.target.className));
 
-    const listener = value => console.log('Classnames of clicked link:', value);
+const listener = value => console.log('Classnames of clicked link:', value);
 
-    isPrimary
-      .onValue(listener);
+isPrimary.onValue(listener);
+```
 
 ### Remove value listener
-
-    isPrimary
-      .offValue(listener);
+```js
+clicks.offValue(listener);
+```
 
 ### Remove child stream
 
 `isPrimary.onValue` will not be called anymore
+```js
+doc
+  .querySelectorAll('.link')
+  .removeEventListener('click', clicks); // or use .remove('click', isPrimary);
+// or explicitly
 
-    doc
-      .querySelectorAll('.link')
-      .removeEventListener('click', linkStream); // or use .remove('click', isPrimary);
-    // or explicitly
-    linkStream.remove(isPrimary);
+clicks.remove(isPrimary);
+```
 
 ### Remove handler
-
+```js
     doc
       .querySelectorAll('.link')
       .removeEventListener('click', linkStream); // or use .remove('click', linkStream);
+```
 
 ## Stroxy API
 
@@ -116,19 +123,18 @@ Stroxy only works on certain methods and method signatures. Currently the follow
 
 Currently it isn't possible to create multiple children of child streams.
 Doing so will result in strange behavior:
+```js
+const clicks = doc
+  .querySelectorAll('.link') // works on NodeLists as well!
+  .addEventListener('click'); // or use .add('click'); shorthand
 
-    const linkStream = doc
-      .querySelectorAll('.link') // works on NodeLists as well!
-      .addEventListener('click'); // or use .add('click'); shorthand
+const childStream = clicks.pipe(v => v);
 
-    const childStream = linkStream.pipe(v => v);
+childStream.pipe(w => w);
 
-    childStream
-      .pipe(w => w);
-
-    // Don't do this!
-    childStream
-      .pipe(x => x);
+// Don't do this!
+childStream.pipe(x => x);
+```
 
 Ideas to resolve to this issue are always appreciated :)
 
@@ -141,3 +147,14 @@ Special thanks to @gianlucaguarini for the inspiration.
 ## Name
 
 The name is a very bland combination of the words `stream` and `proxy`.
+
+
+[travis-image]:https://img.shields.io/travis/nilssolanki/stroxy.svg?style=flat-square
+[travis-url]:https://travis-ci.org/nilssolanki/allora
+
+[license-image]:http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
+[license-url]:LICENSE.txt
+
+[npm-version-image]:http://img.shields.io/npm/v/stroxy.svg?style=flat-square
+[npm-downloads-image]:http://img.shields.io/npm/dm/stroxy.svg?style=flat-square
+[npm-url]:https://npmjs.org/package/stroxy
