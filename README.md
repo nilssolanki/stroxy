@@ -55,9 +55,9 @@ clicks.remove(isPrimary);
 
 ### Remove handler
 ```js
-    doc
-      .querySelectorAll('.link')
-      .removeEventListener('click', linkStream); // or use .remove('click', linkStream);
+doc
+  .querySelectorAll('.link')
+  .removeEventListener('click', linkStream); // or use .remove('click', linkStream);
 ```
 
 ## Stroxy API
