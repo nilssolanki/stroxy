@@ -1,6 +1,6 @@
 {
   "name": "stroxy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A little wrapper which makes dom event listeners streamable.",
   "main": "index.js",
   "esnext:main": "src/index.js",
