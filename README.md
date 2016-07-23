@@ -2,6 +2,8 @@
 
 A simple streaming wrapper for native event functions using ES2015 proxies.
 
+## Installation
+
 ## Examples
 
 ### Simple click handler

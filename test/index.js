@@ -1,4 +1,7 @@
-const stroxy = require('../index');
+require('source-map-support').install();
+
+const stroxyMax = require('../index');
+const stroxyMin = require('../index.min');
 
 const EventEmitter = require('events');
 const chai = require('chai');
@@ -6,148 +9,173 @@ const expect = chai.expect;
 
 const intervalDuration = 200;
 
-describe('stroxy', () => {
-  let emitter, myGlobal;
+runTests(stroxyMax, 'max');
+runTests(stroxyMin, 'min');
 
-  beforeEach(() => {
-    emitter = stroxy(new EventEmitter());
-    myGlobal = stroxy(global);
-  });
+/**
+ * Run the tests
+ * @param {Object} stroxy - The stroxy object (max- and minified)
+ * @param {string} type - The type name
+ */
+function runTests(stroxy, type) {
+  describe(`stroxy ${ type }`, () => {
+    let emitter, myGlobal;
 
-  it('should return a proxied element which has streamable functions', (done) => {
-    expect(myGlobal.setInterval).to.be.a('function');
+    beforeEach(() => {
+      emitter = stroxy(new EventEmitter());
+      myGlobal = stroxy(global);
+    });
 
-    const stream = myGlobal.setInterval(intervalDuration);
-    const stream2 = myGlobal.setInterval(intervalDuration);
+    it('should return a proxied element which has streamable functions', (done) => {
+      expect(myGlobal.setInterval).to.be.a('function');
 
-    expect(stream).to.be.a('object');
-    expect(stream).to.have.property('pipe');
-    expect(stream).to.have.property('onValue');
-    expect(stream).to.have.property('event');
-    expect(Object.getPrototypeOf(stream)).to.be.equal(Object.getPrototypeOf(stream2));
+      const stream = myGlobal.setInterval(intervalDuration);
+      const stream2 = myGlobal.setInterval(intervalDuration);
 
-    done();
-  });
-
-  it('should be pipeable, return a value at the end and be unbound after one iteration', (done) => {
-  	const stream = myGlobal.setInterval(intervalDuration);
-
-    let counter = 0;
-    const pipes = stream
-      .pipe(_ => ++counter);
-
-    pipes.onValue(value => {
-      expect(value).to.be.equal(1);
-      expect(value).to.be.equal(counter);
-
-      myGlobal.clearInterval(stream);
+      expect(stream).to.be.a('object');
+      expect(stream).to.have.property('pipe');
+      expect(stream).to.have.property('onValue');
+      expect(stream).to.have.property('event');
+      expect(Object.getPrototypeOf(stream)).to.be.equal(Object.getPrototypeOf(stream2));
 
       done();
     });
-  });
 
-  it('should allow for multiple child streams with different values', (done) => {
-  	const stream = myGlobal.setInterval(intervalDuration);
+    it('should return a proxied element which has streamable functions', (done) => {
+      expect(myGlobal.setInterval).to.be.a('function');
 
-    let counterPlus = 0;
-    const pipePlus = stream
-      .pipe(_ => ++counterPlus);
+      const stream = myGlobal.setInterval(intervalDuration);
+      const stream2 = myGlobal.setInterval(intervalDuration);
 
-    let counterMinus = 0;
-    const pipeMinus = stream
-      .pipe(_ => --counterMinus);
+      expect(stream).to.be.a('object');
+      expect(stream).to.have.property('pipe');
+      expect(stream).to.have.property('onValue');
+      expect(stream).to.have.property('event');
+      expect(Object.getPrototypeOf(stream)).to.be.equal(Object.getPrototypeOf(stream2));
 
-    const promisePlus = new Promise((resolve) => {
-      pipePlus.onValue(value => {
+      done();
+    });
+
+    it('should be pipeable, return a value at the end and be unbound after one iteration', (done) => {
+      const stream = myGlobal.setInterval(intervalDuration);
+
+      let counter = 0;
+      const pipes = stream
+        .pipe(_ => ++counter);
+
+      pipes.onValue(value => {
         expect(value).to.be.equal(1);
-        expect(value).to.be.equal(counterPlus);
+        expect(value).to.be.equal(counter);
 
-        resolve();
-      });
-    });
-
-    const promiseMinus = new Promise((resolve) => {
-      pipeMinus.onValue(value => {
-        expect(value).to.be.equal(-1);
-        expect(value).to.be.equal(counterMinus);
-
-        resolve();
-      });
-    });
-
-    Promise
-      .all([
-        promisePlus,
-        promiseMinus
-      ])
-      .then(_ => {
         myGlobal.clearInterval(stream);
+
         done();
       });
-  });
-
-  it('should allow for a single child streams to be removed without stopping the others', (done) => {
-	const stream = myGlobal.setInterval(intervalDuration);
-
-    let counterPlus = 0;
-    const pipePlus = stream
-      .pipe(_ => ++counterPlus);
-
-    let counterMinus = 0;
-    const pipeMinus = stream
-      .pipe(_ => --counterMinus);
-
-    const promisePlus = new Promise((resolve) => {
-      pipePlus.onValue(value => {
-        expect(value).to.be.equal(1);
-        expect(value).to.be.equal(counterPlus);
-
-        myGlobal.clearInterval(pipePlus);
-
-        resolve();
-      });
     });
 
-    const promiseMinus = new Promise((resolve) => {
-      pipeMinus.onValue(value => {
-        if (value < -1) {
+    it('should allow for multiple child streams with different values', (done) => {
+      const stream = myGlobal.setInterval(intervalDuration);
+
+      let counterPlus = 0;
+      const pipePlus = stream
+        .pipe(_ => ++counterPlus);
+
+      let counterMinus = 0;
+      const pipeMinus = stream
+        .pipe(_ => --counterMinus);
+
+      const promisePlus = new Promise((resolve) => {
+        pipePlus.onValue(value => {
+          expect(value).to.be.equal(1);
+          expect(value).to.be.equal(counterPlus);
+
           resolve();
-        }
+        });
       });
+
+      const promiseMinus = new Promise((resolve) => {
+        pipeMinus.onValue(value => {
+          expect(value).to.be.equal(-1);
+          expect(value).to.be.equal(counterMinus);
+
+          resolve();
+        });
+      });
+
+      Promise
+        .all([
+          promisePlus,
+          promiseMinus
+        ])
+        .then(_ => {
+          myGlobal.clearInterval(stream);
+          done();
+        });
     });
 
-    Promise
-      .all([
-        promisePlus,
-        promiseMinus
-      ])
-      .then(_ => {
-        myGlobal.clearInterval(stream);
-        done();
+    it('should allow for a single child streams to be removed without stopping the others', (done) => {
+      const stream = myGlobal.setInterval(intervalDuration);
+
+      let counterPlus = 0;
+      const pipePlus = stream
+        .pipe(_ => ++counterPlus);
+
+      let counterMinus = 0;
+      const pipeMinus = stream
+        .pipe(_ => --counterMinus);
+
+      const promisePlus = new Promise((resolve) => {
+        pipePlus.onValue(value => {
+          expect(value).to.be.equal(1);
+          expect(value).to.be.equal(counterPlus);
+
+          myGlobal.clearInterval(pipePlus);
+
+          resolve();
+        });
       });
+
+      const promiseMinus = new Promise((resolve) => {
+        pipeMinus.onValue(value => {
+          if (value < -1) {
+            resolve();
+          }
+        });
+      });
+
+      Promise
+        .all([
+          promisePlus,
+          promiseMinus
+        ])
+        .then(_ => {
+          myGlobal.clearInterval(stream);
+          done();
+        });
+    });
+
+    it('should allow removing value listeners to be removed separately', (done) => {
+      const stream = myGlobal.setInterval(intervalDuration);
+
+      let counterPlus = 0;
+      const pipePlus = stream
+        .pipe(_ => ++counterPlus);
+
+      const listener = value => {
+        expect(value).to.be.equal(1);
+        expect(value).to.be.equal(counterPlus);
+
+        stream.offValue(listener);
+
+        myGlobal
+          .setTimeout(intervalDuration * 2)
+          .pipe(_ => {
+            myGlobal.clearInterval(stream);
+            done();
+          });
+      };
+
+      pipePlus.onValue(listener);
+    });
   });
-
-  it('should allow removing value listeners', (done) => {
-	const stream = myGlobal.setInterval(intervalDuration);
-
-    let counterPlus = 0;
-    const pipePlus = stream
-      .pipe(_ => ++counterPlus);
-
-    const listener = value => {
-	  expect(value).to.be.equal(1);
-	  expect(value).to.be.equal(counterPlus);
-
-	  stream.offValue(listener);
-
-	  myGlobal
-	  	.setTimeout(intervalDuration * 2)
-	  	.pipe(_ => {
-	  		myGlobal.clearInterval(stream);
-	  		done();
-	  	});
-	};
-
-	pipePlus.onValue(listener);
-  });
-});
+}

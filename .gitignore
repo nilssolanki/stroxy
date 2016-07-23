@@ -38,3 +38,6 @@ jspm_packages
 
 # Editor
 .idea
+
+# Mac
+.DS_Store

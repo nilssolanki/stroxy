@@ -1,20 +1,24 @@
-var stroxy = (function () {
+(function () {
   'use strict';
 
-  const ADD = 1;
-  const REMOVE = -1;
-
-  const $$stream = Symbol('stream');
-
+  /**
+   * Create a dictionary object without a preexisting prototype chain
+   * @param {Object} obj - An object with properties to assign to the empty object
+   * @return {Object} The empty object with the assigned properties
+   */
   const createEmpty = obj => Object.assign(Object.create(null), obj);
 
   /**
-   * The list of shorthand aliases for functions
+   * This signifies that the streamable function registers an event listener
+   * @type {number}
    */
-  const aliasRegistry = createEmpty({
-    add: 'addEventListener',
-    remove: 'removeEventListener',
-  });
+  const ADD = 1;
+
+  /**
+   * This signifies that the streamable function removes an event listener
+   * @type {number}
+   */
+  const REMOVE = -1;
 
   /**
    * The list of streamable properties with their corresponding callback index
@@ -47,8 +51,8 @@ var stroxy = (function () {
     on: { // jQuery, EventEmitter
       callbackIndex: 1,
       type: ADD,
-    }, // jQuery
-    off: {
+    },
+    off: { // jQuery
       callbackIndex: 1,
       type: REMOVE,
     }, // EventEmitter
@@ -58,18 +62,100 @@ var stroxy = (function () {
     },
   });
 
-  const getAlias = alias => aliasRegistry[alias] ? aliasRegistry[alias] : alias;
-  const addAlias = (alias, name) => !aliasRegistry[alias] ? aliasRegistry[alias] = name : false;
-
+  /**
+   * Check if a function name is in the list of streamables
+   * @param {string} name - The function name
+   * @return {boolean} Whether it is in the list or not
+   */
   const isStreamable = name => !!streamableRegistry[name];
-  const addStreamable = (name, config) => !streamableRegistry[name] ? streamableRegistry[name] = config : false;
 
+  /**
+   * Get an event function signature from the streamable list
+   * @param {string} name - The name of the function
+   * @return {Object} The function signature
+   */
+  const getStreamable = (name) => streamableRegistry[name];
+
+  /**
+   * Add an event function to the streamable list
+   * @param {string} name - The name of the function
+   * @param {Object} config - The original function name
+   * @param {number|null} config.callbackIndex - The nth parameter where the callback goes (zero-based)
+   * @param {(ADD|REMOVE)} config.type - Is it an ADD or REMOVE action
+   * @return {boolean} Success or failure
+   */
+  const addStreamable = (name, config) => !streamableRegistry[name] ? !!(streamableRegistry[name] = config) : false;
+
+  /**
+   * The list of shorthand aliases for functions
+   */
+  const aliasRegistry = createEmpty({
+    add: 'addEventListener',
+    remove: 'removeEventListener',
+  });
+
+  /**
+   * Seek the function name for an alias
+   * @param {String} alias - The alias to be sought
+   * @return {String} The real function name
+   */
+  const getAlias = alias => aliasRegistry[alias] ? aliasRegistry[alias] : alias;
+
+  /**
+   * Add an alias for an existing function name
+   * @param {String} alias - The alias to add
+   * @param {String} name - The original function name
+   * @return {Boolean} Success or failure
+   */
+  const addAlias = (alias, name) => !aliasRegistry[alias] ? !!(aliasRegistry[alias] = name) : false;
+
+  /**
+   * The object recognition regex
+   * @type {RegExp}
+   */
   const objectRegex = /^\[object/;
-  const isObject = obj => objectRegex.test(Object.prototype.toString.call(obj));
+
+  /**
+   * Check if a value is an object (functions count as well)
+   * @param {*} obj - The value to be checked
+   * @return {boolean}
+   */
+  const isObject = obj => typeof obj !== 'undefined' ? objectRegex.test(Object.prototype.toString.call(obj)) : false;
+
+  /**
+   * Check if a value is a function
+   * @param {*} fn - The value to be checked
+   * @return {boolean}
+   */
   const isFunction = fn => typeof fn === 'function';
-  const isNumber = number => number === Number(number);
+
+  /**
+   * Check if a value is a number (only number primitives)
+   * @param {*} number - The value to be checked
+   * @return {boolean}
+   */
+  const isNumber = number => typeof number !== 'undefined' ? number === Number(number) : false;
+
+  /**
+   * Check if a value is a NodeList
+   * @param {*} obj - The value to be checked
+   * @return {boolean}
+   */
   const isNodeList = obj => typeof NodeList !== 'undefined' ? NodeList.prototype.isPrototypeOf(obj) : false;
 
+  /**
+   * A symbol to mark all stream instances
+   * @type {Symbol}
+   */
+  const $$stream = Symbol('stroxy-stream');
+
+
+  /**
+   * Remove an entry from an array
+   * @param {*} entry - The entry to be removed from the array
+   * @param {Array} array - The array from which to remove the entry
+   * @returns {Array}
+   */
   function removeEntry(entry, array) {
     array = array.slice();
     const index = array.indexOf(entry);
@@ -84,10 +170,12 @@ var stroxy = (function () {
    * @param {*} value - The current value of the parent
    */
   function runInstances(instances, value) {
-    instances.forEach((instance) => {
+    instances = instances.slice();
+    return instances.map((instance) => {
       instance._value = instance.pipes.reduce((val, fn) => {
         return fn(val, value);
       }, value);
+      return instance;
     });
   }
 
@@ -102,11 +190,30 @@ var stroxy = (function () {
   }
 
   /**
+   * Get the current (parent) stream, from either a parent or a child stream
+   * @param {Object} thisValue - The stream (parent) instance
+   * @return { Object } - The correct context for managing instances and value listeners
+   */
+  function getContext(thisValue) {
+    return thisValue.parent ? thisValue.parent : thisValue;
+  }
+
+
+  /**
    * The prototypal object for both parent and child streams
    */
   const streamProto = {
+    /**
+     * Mark every stream and child stream (through the prototype chain) as such
+     */
     [$$stream]: true,
+    /**
+     * The list of instances on the parent
+     */
     instances: [],
+    /**
+     * The list of value listeners on the parent and child streams
+     */
     valueListeners: [],
     /**
      * Add a pipe to the current stream
@@ -116,12 +223,15 @@ var stroxy = (function () {
      */
     pipe(fn) {
       if (!this.parent) {
-        const instance = Object.create(this);
-        instance.pipes = [fn];
-        instance._value = this._value;
-        instance.parent = this;
-        instance.valueOf = null;
+        const instance = Object.assign(Object.create(this), {
+          _value: this._value,
+          parent: this,
+          pipes: [fn],
+          valueOf: null,
+        });
+
         this.instances.push(instance);
+
         return instance;
       }
 
@@ -133,9 +243,9 @@ var stroxy = (function () {
      * @param {Function} listener - The listener function
      */
     onValue(listener) {
-      const {valueListeners} = this.parent ? this.parent : this;
+      const context = getContext(this);
 
-      valueListeners.push({
+      context.valueListeners.push({
         listener,
         instance: this,
       });
@@ -145,23 +255,30 @@ var stroxy = (function () {
      * @param {Function} listener - The listener function
      */
     offValue(listener) {
-      const {valueListeners} = this.parent ? this.parent : this;
-
-      this.valueListeners = removeEntry(listener, this.valueListeners);
+      const context = getContext(this);
+      
+      context.valueListeners = removeEntry(listener, context.valueListeners);
     },
     /**
      * Remove a child stream from the loop
-     * @param {Object} object - The listener function
+     * @param {Object} instance - The child stream to be removed
      */
     remove(instance) {
-        this.instances = removeEntry(instance, this.instances);
+      if (this.parent) {
+        console.warn('Cannot remove child stream from another child stream.'
+        + 'Did you want to remove it from the parent stream?');
+        return false;
+      }
 
-        this.valueListeners = this.valueListeners.filter(({ instance: listenerInstance }) => {
-          return listenerInstance !== instance;
-        });
+      this.instances = removeEntry(instance, this.instances);
+
+      this.valueListeners = this.valueListeners.filter(({ instance: listenerInstance }) => {
+        return listenerInstance !== instance;
+      });
     },
     /**
-     * Returns a function which is triggered by the JS event loop, whenever an event occurs
+     * Returns an event listener which can be registered by event registering functions
+     * Could also be manually registered if so desired
      * @returns {Function} The actual event listener
      */
     event() {
@@ -171,17 +288,19 @@ var stroxy = (function () {
 
       return this.eventFunction = (value) => {
         if (this.parent) {
-          return;
+          console.warn(`Child streams can't have their own event listeners.`);
+          return false;
         }
 
         this._value = value;
 
-        runInstances(this.instances, value);
+        this.instances = runInstances(this.instances, value);
 
         runValueListeners(this);
       };
     },
   };
+
 
   /**
    * Creates a new stream instance
@@ -196,6 +315,12 @@ var stroxy = (function () {
   }
 
   /**
+   * A symbol to mark all stroxified objects
+   * @type {Symbol}
+   */
+  const $$stroxy = Symbol('stroxy');
+
+  /**
    * Is called when `get` property name is one of the event handler ones
    * @param {Object} target - The dom node on which the listener sits
    * @param {string} property - The event function name (e.g. addEventListener)
@@ -204,7 +329,7 @@ var stroxy = (function () {
   function applyListener(target, property) {
     return function (...args) {
       let stream, value;
-      const { type, callbackIndex } = streamableRegistry[property];
+      const { type, callbackIndex } = getStreamable(property);
 
       // Splice the stream into the arguments list
       // If a callbackIndex is defined
@@ -246,7 +371,7 @@ var stroxy = (function () {
    * The core wrapper function
    * Pass in an object (e.g. document) and the event will be
    * @param {Object|Function} obj - The object or function which should be stroxified
-   * @param {String} prop - The property name to be used on the object, mainly used for recursive calls
+   * @param {string} prop - The property name to be used on the object, mainly used for recursive calls
    * @returns {Object|Function} The stroxified object or function
    */
   function stroxy(obj, prop) {
@@ -258,6 +383,11 @@ var stroxy = (function () {
 
         if (isStreamable(name) && isFunction(result)) {
           return applyListener(target, name);
+        }
+
+        // Confirm that this is a stroxified object
+        if (property === $$stroxy) {
+          return true;
         }
 
         if (isObject(result)) {
@@ -285,9 +415,11 @@ var stroxy = (function () {
     REMOVE,
   });
 
-  if (isObject(module)) {
+  if (isObject(module) && isObject(module.exports)) {
     module.exports = exports.default = stroxy;
-  } else {
-    return stroxy;
+  } else if (isObject(window)) {
+    window.stroxy = stroxy;
   }
-})();
+
+}());
+//# sourceMappingURL=index.js.map

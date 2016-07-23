@@ -3,8 +3,10 @@
   "version": "0.1.1",
   "description": "A little wrapper which makes dom event listeners streamable.",
   "main": "index.js",
+  "esnext:main": "src/index.js",
   "scripts": {
-    "test": "mocha test"
+    "build": "node build/index.js",
+    "test": "npm run build && mocha test"
   },
   "repository": {
     "type": "git",
@@ -17,14 +19,17 @@
   },
   "homepage": "https://github.com/nilssolanki/stroxy#readme",
   "devDependencies": {
+    "babel-minify": "^0.1.12",
     "chai": "^3.5.0",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "rollup": "^0.25.4",
+    "rollup-plugin-eslint": "^2.0.2",
+    "rollup-plugin-includepaths": "^0.1.5",
+    "rollup-plugin-uglify": "^1.0.1",
+    "source-map-support": "^0.4.2"
   },
   "directories": {
     "example": "example",
     "test": "test"
-  },
-  "dependencies": {
-    "chai": "^3.5.0"
   }
 }
