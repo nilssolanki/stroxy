@@ -1,4 +1,4 @@
-import { createEmpty } from './create-empty';
+import { createEmpty } from 'util/create-empty';
 
 /**
  * This signifies that the streamable function registers an event listener

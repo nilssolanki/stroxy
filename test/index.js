@@ -177,5 +177,49 @@ function runTests(stroxy, type) {
 
       pipePlus.onValue(listener);
     });
+
+    it('should allow using custom aliases', (done) => {
+      stroxy.addAlias('iOn', 'setInterval');
+      stroxy.addAlias('iOff', 'clearInterval');
+
+      const stream = myGlobal.iOn(intervalDuration);
+
+      let counterPlus = 0;
+      const pipePlus = stream
+        .pipe(_ => ++counterPlus);
+
+      const listener = value => {
+        expect(value).to.be.equal(1);
+        expect(value).to.be.equal(counterPlus);
+
+        myGlobal.iOff(stream);
+
+        done();
+      };
+
+      pipePlus.onValue(listener);
+    });
+
+    it('should allow using custom streamable functions', (done) => {
+      stroxy.addStreamable('setImmediate', {
+        callbackIndex: 0,
+        type: stroxy.ADD,
+      });
+
+      const stream = myGlobal.setImmediate();
+
+      let counterPlus = 0;
+      const pipePlus = stream
+        .pipe(_ => ++counterPlus);
+
+      const listener = value => {
+        expect(value).to.be.equal(1);
+        expect(value).to.be.equal(counterPlus);
+
+        done();
+      };
+
+      pipePlus.onValue(listener);
+    });
   });
 }

@@ -1,6 +1,6 @@
 import { ADD, REMOVE, isStreamable, getStreamable, addStreamable } from 'util/streamable';
 import { getAlias, addAlias } from 'util/alias';
-import { isObject, isFunction, isNumber, isNodeList } from 'util/type';
+import { isObject, isFunction, isNumber, isIterable } from 'util/type';
 
 import { createStream } from 'stream';
 
@@ -17,6 +17,13 @@ const $$stroxy = Symbol('stroxy');
  * @returns {Object|undefined} The stream for the current event or nothing in a removal event
  */
 function applyListener(target, property) {
+  const targetIterable = isIterable(target);
+  const fn = targetIterable ? target[0][property] : target[property];
+
+  if (!isFunction(fn)) {
+    return target[property];
+  }
+  
   return function (...args) {
     let stream, value;
     const { type, callbackIndex } = getStreamable(property);
@@ -41,7 +48,7 @@ function applyListener(target, property) {
     }
 
     // Apply for all targets entries if it is a NodeList or an Array
-    if (isNodeList(target) || Array.isArray(target)) {
+    if (targetIterable) {
       Array.from(target).forEach((node) => {
         Reflect.apply(node[property], node, args);
       });
@@ -68,10 +75,9 @@ function stroxy(obj, prop) {
   return new Proxy(prop ? obj[prop] : obj, {
     get(target, property) {
       const result = target[property];
-
       const name = getAlias(property);
-
-      if (isStreamable(name) && isFunction(result)) {
+      
+      if (isStreamable(name)) {
         return applyListener(target, name);
       }
 
@@ -105,8 +111,8 @@ stroxy = Object.assign(stroxy, {
   REMOVE,
 });
 
-if (isObject(module) && isObject(module.exports)) {
+if (typeof module === 'object' && typeof module.exports === 'object') {
   module.exports = exports.default = stroxy;
-} else if (isObject(window)) {
+} else if (typeof window === 'object') {
   window.stroxy = stroxy;
 }

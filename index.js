@@ -120,7 +120,7 @@
    * @param {*} obj - The value to be checked
    * @return {boolean}
    */
-  const isObject = obj => typeof obj !== 'undefined' ? objectRegex.test(Object.prototype.toString.call(obj)) : false;
+  const isObject = obj => objectRegex.test(Object.prototype.toString.call(obj));
 
   /**
    * Check if a value is a function
@@ -134,7 +134,7 @@
    * @param {*} number - The value to be checked
    * @return {boolean}
    */
-  const isNumber = number => typeof number !== 'undefined' ? number === Number(number) : false;
+  const isNumber = number => number === Number(number);
 
   /**
    * Check if a value is a NodeList
@@ -142,6 +142,13 @@
    * @return {boolean}
    */
   const isNodeList = obj => typeof NodeList !== 'undefined' ? NodeList.prototype.isPrototypeOf(obj) : false;
+
+  /**
+   * Check if a value is a common iterable
+   * @param {*} obj - The value to be check
+   * @return {boolean}
+   */
+  const isIterable = obj => isNodeList(obj) || Array.isArray(obj) || isFunction(obj[Symbol.iterator]);
 
   /**
    * A symbol to mark all stream instances
@@ -327,6 +334,13 @@
    * @returns {Object|undefined} The stream for the current event or nothing in a removal event
    */
   function applyListener(target, property) {
+    const targetIterable = isIterable(target);
+    const fn = targetIterable ? target[0][property] : target[property];
+
+    if (!isFunction(fn)) {
+      return target[property];
+    }
+    
     return function (...args) {
       let stream, value;
       const { type, callbackIndex } = getStreamable(property);
@@ -351,7 +365,7 @@
       }
 
       // Apply for all targets entries if it is a NodeList or an Array
-      if (isNodeList(target) || Array.isArray(target)) {
+      if (targetIterable) {
         Array.from(target).forEach((node) => {
           Reflect.apply(node[property], node, args);
         });
@@ -378,10 +392,9 @@
     return new Proxy(prop ? obj[prop] : obj, {
       get(target, property) {
         const result = target[property];
-
         const name = getAlias(property);
-
-        if (isStreamable(name) && isFunction(result)) {
+        
+        if (isStreamable(name)) {
           return applyListener(target, name);
         }
 
@@ -415,9 +428,9 @@
     REMOVE,
   });
 
-  if (isObject(module) && isObject(module.exports)) {
+  if (typeof module === 'object' && typeof module.exports === 'object') {
     module.exports = exports.default = stroxy;
-  } else if (isObject(window)) {
+  } else if (typeof window === 'object') {
     window.stroxy = stroxy;
   }
 

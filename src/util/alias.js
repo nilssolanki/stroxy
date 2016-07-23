@@ -1,4 +1,4 @@
-import { createEmpty } from './create-empty';
+import { createEmpty } from 'util/create-empty';
 
 /**
  * The list of shorthand aliases for functions
