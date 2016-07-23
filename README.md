@@ -136,7 +136,7 @@ childStream.pipe(w => w);
 childStream.pipe(x => x);
 ```
 
-Ideas to resolve to this issue are always appreciated :)
+Ideas to resolve to this issue are highly appreciated :)
 
 ## Source of Inspiration
 
@@ -150,7 +150,7 @@ The name is a very bland combination of the words `stream` and `proxy`.
 
 
 [travis-image]:https://img.shields.io/travis/nilssolanki/stroxy.svg?style=flat-square
-[travis-url]:https://travis-ci.org/nilssolanki/allora
+[travis-url]:https://travis-ci.org/nilssolanki/stroxy
 
 [license-image]:http://img.shields.io/badge/license-MIT-000000.svg?style=flat-square
 [license-url]:LICENSE.txt
