@@ -1,3 +1,5 @@
+import { create } from 'util/create';
+
 /**
  * A symbol to mark all stream instances
  * @type {Symbol}
@@ -78,12 +80,12 @@ export const streamProto = {
    */
   pipe(fn) {
     if (!this.parent) {
-      const instance = Object.assign(Object.create(this), {
+      const instance = create({
         _value: this._value,
         parent: this,
         pipes: [fn],
         valueOf: null,
-      });
+      }, this);
 
       this.instances.push(instance);
 
@@ -111,7 +113,7 @@ export const streamProto = {
    */
   offValue(listener) {
     const context = getContext(this);
-    
+
     context.valueListeners = removeEntry(listener, context.valueListeners);
   },
   /**
@@ -163,8 +165,8 @@ export const streamProto = {
  * @returns {Object} The freshly created stream
  */
 export function createStream() {
-  return Object.assign(Object.create(streamProto), {
+  return create({
     instances: [],
     valueListeners: [],
-  });
+  }, streamProto);
 }

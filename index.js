@@ -2,11 +2,11 @@
   'use strict';
 
   /**
-   * Create a dictionary object without a preexisting prototype chain
+   * Create a dictionary object, by default without a preexisting prototype chain
    * @param {Object} obj - An object with properties to assign to the empty object
    * @return {Object} The empty object with the assigned properties
    */
-  const createEmpty = obj => Object.assign(Object.create(null), obj);
+  const create = (obj, proto = null) => Object.assign(Object.create(proto), obj);
 
   /**
    * This signifies that the streamable function registers an event listener
@@ -23,7 +23,7 @@
   /**
    * The list of streamable properties with their corresponding callback index
    */
-  const streamableRegistry = createEmpty({
+  const streamableRegistry = create({
     addEventListener: {
       callbackIndex: 1,
       type: ADD,
@@ -89,7 +89,7 @@
   /**
    * The list of shorthand aliases for functions
    */
-  const aliasRegistry = createEmpty({
+  const aliasRegistry = create({
     add: 'addEventListener',
     remove: 'removeEventListener',
   });
@@ -223,12 +223,12 @@
      */
     pipe(fn) {
       if (!this.parent) {
-        const instance = Object.assign(Object.create(this), {
+        const instance = create({
           _value: this._value,
           parent: this,
           pipes: [fn],
           valueOf: null,
-        });
+        }, this);
 
         this.instances.push(instance);
 
@@ -256,7 +256,7 @@
      */
     offValue(listener) {
       const context = getContext(this);
-      
+
       context.valueListeners = removeEntry(listener, context.valueListeners);
     },
     /**
@@ -308,10 +308,10 @@
    * @returns {Object} The freshly created stream
    */
   function createStream() {
-    return Object.assign(Object.create(streamProto), {
+    return create({
       instances: [],
       valueListeners: [],
-    });
+    }, streamProto);
   }
 
   /**

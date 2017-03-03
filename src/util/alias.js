@@ -1,9 +1,9 @@
-import { createEmpty } from 'util/create-empty';
+import { create } from 'util/create';
 
 /**
  * The list of shorthand aliases for functions
  */
-export const aliasRegistry = createEmpty({
+export const aliasRegistry = create({
   add: 'addEventListener',
   remove: 'removeEventListener',
 });

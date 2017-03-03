@@ -1,4 +1,4 @@
-import { createEmpty } from 'util/create-empty';
+import { create } from 'util/create';
 
 /**
  * This signifies that the streamable function registers an event listener
@@ -15,7 +15,7 @@ export const REMOVE = -1;
 /**
  * The list of streamable properties with their corresponding callback index
  */
-export const streamableRegistry = createEmpty({
+export const streamableRegistry = create({
   addEventListener: {
     callbackIndex: 1,
     type: ADD,
