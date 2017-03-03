@@ -137,18 +137,11 @@
   const isNumber = number => number === Number(number);
 
   /**
-   * Check if a value is a NodeList
-   * @param {*} obj - The value to be checked
-   * @return {boolean}
-   */
-  const isNodeList = obj => typeof NodeList !== 'undefined' ? NodeList.prototype.isPrototypeOf(obj) : false;
-
-  /**
    * Check if a value is a common iterable
    * @param {*} obj - The value to be check
    * @return {boolean}
    */
-  const isIterable = obj => isNodeList(obj) || Array.isArray(obj) || isFunction(obj[Symbol.iterator]);
+  const isIterable = obj => isFunction(obj[Symbol.iterator]);
 
   /**
    * A symbol to mark all stream instances
